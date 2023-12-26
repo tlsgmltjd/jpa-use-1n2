@@ -1,2 +1,5 @@
-package com.example.hellospringjpa1.domain;public enum OrderStatus {
+package com.example.hellospringjpa1.domain;
+
+public enum OrderStatus {
+    ORDER, CANCEL
 }

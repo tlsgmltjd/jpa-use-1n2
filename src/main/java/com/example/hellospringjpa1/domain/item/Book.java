@@ -1,7 +1,13 @@
-package com.example.hellospringjpa1.domain;
+package com.example.hellospringjpa1.domain.item;
 
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import lombok.Data;
 
 @Entity
-public class Book {
+@DiscriminatorValue("B")
+@Data
+public class Book extends Item {
+    private String author;
+    private String isbn;
 }

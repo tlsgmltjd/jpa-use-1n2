@@ -1,13 +1,15 @@
-package com.example.hellospringjpa1.domain;
+package com.example.hellospringjpa1.domain.item;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "dtype")
 public abstract class Item {
     @Id @GeneratedValue
     @Column(name = "item_id")
@@ -18,4 +20,7 @@ public abstract class Item {
     private Integer price;
 
     private Integer stockQuantity;
+
+    @ManyToMany(mappedBy = "items")
+    private List<Category> categories = new ArrayList<>();
 }
