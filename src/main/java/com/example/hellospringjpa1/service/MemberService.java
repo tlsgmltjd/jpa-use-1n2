@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberService {
     // 생성자 인젝션 : 생성시 뭘 의존하고 있는지 명확하게 표현 가능, 테스트 코드 작성시에도 용의
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 회원 가입
