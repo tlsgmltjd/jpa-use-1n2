@@ -26,6 +26,7 @@ public class MemberRepository {
     }
 
     public List<Member> findAll() {
+        // JPQL
         return em.createQuery("SELECT m FROM Member m", Member.class)
                 .getResultList();
     }
