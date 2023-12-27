@@ -1,7 +1,9 @@
 package com.example.hellospringjpa1.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,10 +11,12 @@ import java.util.List;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.LAZY;
+import static lombok.AccessLevel.PROTECTED;
 
 @Entity
 @Table(name = "orders")
 @Data
+@NoArgsConstructor(access = PROTECTED)
 public class Order {
     @Id @GeneratedValue
     @Column(name = "order_id")
@@ -50,6 +54,9 @@ public class Order {
         this.delivery = delivery;
         delivery.setOrder(this);
     }
+
+    // @NoArgsConstructor(access = PROTECTED) 를 등록하므로써 new Order(...); 이런식으로
+    // 기대하지 않은 방식으로 생성을 하려 할때 제약이 걸림. (Order 생성은 아래 생성 메서드를 이용하여 생성하는 것으로 기대하고 있음)
 
     // == 생성 메서드 == //
     public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems) {
