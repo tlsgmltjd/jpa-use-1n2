@@ -1,12 +1,15 @@
 package com.example.hellospringjpa1.contorller;
 
 import com.example.hellospringjpa1.domain.item.Book;
+import com.example.hellospringjpa1.domain.item.Item;
 import com.example.hellospringjpa1.service.ITemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -32,5 +35,13 @@ public class ItemController {
 
         iTemService.saveItem(book);
         return "redirect:/";
+    }
+
+    @GetMapping("/items")
+    public String list(Model model) {
+        List<Item> items = iTemService.findItems();
+        model.addAttribute("items", items);
+
+        return "items/itemList";
     }
 }
