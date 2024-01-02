@@ -64,9 +64,16 @@ public class ItemController {
     }
 
     @PostMapping("/items/{itemId}/edit")
-    public String updateItem(@ModelAttribute("form") BookForm form, @PathVariable String itemId) {
-        Book book = new Book();
+    public String updateItem(@ModelAttribute("form") BookForm form, @PathVariable Long itemId) {
 
+        // 트랜잭션이 있다고 쳐도 해당 객체는 준영속 엔티티이기 때문에 영속성 컨텍스트가 관리하지 않아
+        // 더티 채킹이 일어나지 않음 (이미 식별자를 가지고 있음. 디비에 한번 넣었다 빠진 엔티티)
+        // 준영속 엔티티를 수정하는 방법 / 변경감지 사용, 머지 사용
+        // 1. 영속 상태의 엔티티를 디비에서 조회 후 더티 채팅의 대상이 되게 한다.
+        // 2. merge, 는 준영속 상태의 엔티티를 영속 상태로 변경해준다.
+        // merge 쓰면 모든 데이터를 다 밀어넣어줘서 가급적 쓰지말자
+        // 결론 -> 엔티티를 변경할 때는 항상 변경 감지를 사용하자
+        Book book = new Book();
         book.setId(form.getId());
         book.setName(form.getName());
         book.setPrice(form.getPrice());
