@@ -48,6 +48,15 @@ public class OrderSimpleApiController {
                 .collect(toList());
     }
 
+    // V3 페치조인으로 최적화
+    // 필요한, 연관관계의 객체그래프를 SQL 한방에 가져온다.
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> orders2V3() {
+        return orderRepository.findAllWithMemberDelivery().stream()
+                .map(SimpleOrderDto::new)
+                .collect(toList());
+    }
+
     @Data
     static class SimpleOrderDto {
         private Long orderId;
