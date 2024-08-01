@@ -5,7 +5,8 @@ import com.example.hellospringjpa1.domain.Order;
 import com.example.hellospringjpa1.domain.OrderStatus;
 import com.example.hellospringjpa1.repository.OrderRepository;
 import com.example.hellospringjpa1.repository.OrderSearch;
-import lombok.AllArgsConstructor;
+import com.example.hellospringjpa1.repository.order.simplerquery.OrderSimplerQueryRepository;
+import com.example.hellospringjpa1.repository.order.simplerquery.SimpleOrderQueryDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -27,6 +27,7 @@ import static java.util.stream.Collectors.*;
 @RequiredArgsConstructor
 public class OrderSimpleApiController {
     private final OrderRepository orderRepository;
+    private final OrderSimplerQueryRepository orderSimplerQueryRepository;
 
     // V1 엔티티를 직접 노출
     @GetMapping("/api/v1/simple-orders")
@@ -56,6 +57,24 @@ public class OrderSimpleApiController {
                 .map(SimpleOrderDto::new)
                 .collect(toList());
     }
+
+    // V4 JPA에서 DTO로 한번에 조회
+    @GetMapping("/api/v4/simple-orders")
+    public List<SimpleOrderQueryDto> orders2V4() {
+        return orderSimplerQueryRepository.findOrderDtos();
+    }
+
+    // trade off v3 vs v4
+
+    // V3
+    // Order라는 엔티티를 조회한다는 것은 변하지 않은데 해당 엔티티와 연관관계인 엔티티의 객체 그래프를 한번에 조회해서 성능을 튜닝, 재사용성 높다
+
+    // V4
+    // 해당 API의 필요한 컬럼만 가져와서 필요한 필드만 가져와서 성능이 좋지만 (생각보다 미비하다), 재사용성이 떨어짐
+    // 논리적인 계층을 허문다, 리포지토리 계층에서 API 스펙에 대한 의존성이 생겨버리는 꼴이다. -> 따로 계층을 만들어 처리하는 것도 방법 (ex. order.simplequery)
+
+    // select 필드가 성능에 그렇게 영향을 미치지는 않는다. 데이터 사이즈가 너무 많다면 고민할만하다
+    // 대부분의 성능은 인덱싱, 조인에서 발생한다.
 
     @Data
     static class SimpleOrderDto {

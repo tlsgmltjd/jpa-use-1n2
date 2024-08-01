@@ -1,6 +1,7 @@
 package com.example.hellospringjpa1.repository;
 
 import com.example.hellospringjpa1.domain.Order;
+import com.example.hellospringjpa1.repository.order.simplerquery.SimpleOrderQueryDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -68,6 +69,10 @@ public class OrderRepository {
                         "join fetch o.delivery d", Order.class
         ).getResultList();
     }
+
+    // DTO로 조회할 때는 new 오퍼레이션을 사용해서 원하는 컬럼만 조회, 바로 DTO 객체 생성 가능하고 페치조인을 하면 안된다.
+    // 연관된 엔티티, 객체 그래프를 가져오는 것이 아니라 연관된 엔티티의 값을 가져오는 것이기 때문에 일반 이너조인으로 해결 가능하다.
+    // -> go to order.simplequery
 
     /*
     * Jpa Criteria
