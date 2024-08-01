@@ -37,5 +37,31 @@ public class OrderSimpleApiController {
         return orderRepository.findAllByString(new OrderSearch());
     }
 
+    // V2 엔티티를 DTO로 변환
+    @GetMapping("/api/v2/simple-orders")
+    public List<SimpleOrderDto> orders2V2() {
+        // N+1 문제 발생
+        // 첫 쿼리 후 해당 쿼리로 인한 Lazy 로딩 추가 쿼리 N번이 발생
+        // 그렇다고 EAGER로 설정하면 쿼리를 예측할 수 없고 성능도 안나온다.
+        return orderRepository.findAllByString(new OrderSearch()).stream()
+                .map(SimpleOrderDto::new)
+                .collect(toList());
+    }
 
+    @Data
+    static class SimpleOrderDto {
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+
+        public SimpleOrderDto(Order order) {
+            this.orderId = order.getId();
+            this.name = order.getMember().getName(); // LAZY 초기화 +쿼리
+            this.orderDate = order.getOrderDate();
+            this.orderStatus = order.getStatus();
+            this.address = order.getDelivery().getAddress(); // LAZY 초기화 +쿼리
+        }
+    }
 }
