@@ -1,5 +1,6 @@
 package com.example.hellospringjpa1.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ public class Delivery {
     @Column(name = "delivery_id")
     private Long id;
 
+    @JsonIgnore // 양방향 연관관계 무한루프 문제로 인한..
     @OneToOne(mappedBy = "delivery", fetch = LAZY)
     private Order order;
 

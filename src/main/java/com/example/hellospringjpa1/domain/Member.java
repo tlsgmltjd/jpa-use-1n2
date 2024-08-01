@@ -21,7 +21,7 @@ public class Member {
     @Embedded // 내장타입
     private Address address;
 
-    @JsonIgnore
+    @JsonIgnore // 양방향 연관관계 무한루프 문제로 인한..
     @OneToMany(mappedBy = "member") // 하나의 회원이 여러개의 Order를 갖는다.
     private List<Order> orders = new ArrayList<>();
     // 컬렉션은 필드에서 바로 초기화 하는 것이 안전하다

@@ -1,6 +1,7 @@
 package com.example.hellospringjpa1.domain;
 
 import com.example.hellospringjpa1.domain.item.Item;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class OrderItem {
     @JoinColumn(name = "item_id")
     private Item item;
 
+    @JsonIgnore // 양방향 연관관계 무한루프 문제로 인한..
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
