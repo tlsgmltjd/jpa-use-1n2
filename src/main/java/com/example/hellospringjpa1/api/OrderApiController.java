@@ -1,14 +1,21 @@
 package com.example.hellospringjpa1.api;
 
+import com.example.hellospringjpa1.domain.Address;
 import com.example.hellospringjpa1.domain.Order;
 import com.example.hellospringjpa1.domain.OrderItem;
+import com.example.hellospringjpa1.domain.OrderStatus;
 import com.example.hellospringjpa1.repository.OrderRepository;
 import com.example.hellospringjpa1.repository.OrderSearch;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,4 +40,51 @@ public class OrderApiController {
         return orders;
     }
 
+    // V2 DTO로 조회
+    @GetMapping("/api/v2/orders")
+    public List<OrderDto> ordersV2() {
+        return orderRepository.findAllByString(new OrderSearch())
+                .stream().map(OrderDto::new)
+                .collect(toList());
+    }
+
+    @Getter
+    static class OrderDto {
+
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+        private List<OrderItemDto> orderItems;
+
+        public OrderDto(Order order) {
+            this.orderId = order.getId();
+            this.name = order.getMember().getName();
+            this.orderDate = order.getOrderDate();
+            this.orderStatus = order.getStatus();
+            this.address = order.getDelivery().getAddress();
+            // lazy 초기화를 안해주면 프록시 객체기 때문에 직렬화를 할 수가 없음(error) 그래도 지금은 하이버네이트 모듈 빈등록해둬서 null값으로 나옴
+            // 하지만 엔티티를 이렇게 노출하는것도 안된다 DTO로 다 바꾸자
+//            order.getOrderItems().forEach(oi -> oi.getItem().getName());
+//            this.orderItems = order.getOrderItems();
+
+            this.orderItems = order.getOrderItems().stream()
+                    .map(OrderItemDto::new).collect(toList());
+        }
+    }
+
+    @Getter
+    static class OrderItemDto {
+
+        private String itemName;
+        private int orderPrice;
+        private int count;
+
+        public OrderItemDto(OrderItem orderItem) {
+            this.itemName = orderItem.getItem().getName();
+            this.orderPrice = orderItem.getOrderPrice();
+            this.count = orderItem.getCount();
+        }
+    }
 }
