@@ -70,6 +70,36 @@ public class OrderRepository {
         ).getResultList();
     }
 
+    public List<Order> findAllWithItem() {
+
+        // 1:다 조인시에는 다쪽이 기준으로 데이터를 조회한다.
+        // 그렇게 된다면 1쪽의 데이터가 중복값이 출력된다.
+        // 아래의 상황으로 보면 Order엔티티 List를 조회하지만 1:다, 컬렉션 연관관계의 객체그래프를 페치조인한다.
+        // 그렇게 된다면 데이터베이스 결과 row에서는 1쪽인 Order의 결과과 중복되어 출력된다.
+        // 그래서 중복된 Order의 갯수만큰 List를 만들어 반환된다.
+
+        // 이런 중복 문제를 막기 위해 distinct 키워드 사용할 수 있다.
+        // distinct 키워드를 붙히면 디비 쿼리에도 붙혀주고 애플리케이션 단에서 JPA가 중복된 데이터를 제거하여 반환해준다.
+        // 하이버네이트 6 버전부터 기본적으로 distinct가 적용되어 중복 문제는 발생하지 않는다.
+
+        // TODO 1:다, 컬렉션 연관관계는 페이징이 불가하다.
+        // WARNNING : HHH90003004: firstResult/maxResults specified with collection fetch; applying in memory
+        // 컬렉션 연관관계에 대해 페이징을 적용하려 한다면 "메모리에 모든 데이터를 퍼올려서 페이징을 적용"한다. <- 페이징에 대한 의미가 없고 성능이 저하된다.
+        // 위에서 말한 1:다 연관관계에 대한 데이터 중복 문제 때문이다.
+
+        // + 컬렉션 페이조인은 두개이상 사용하면 안된다. 데이터 부정합을 초래할 수 있음
+
+        return em.createQuery(
+                        "select o from Order o " +
+                                "join fetch o.member " +
+                                "join fetch o.delivery " +
+                                "join fetch o.orderItems oi " +
+                                "join fetch oi.item i", Order.class)
+                .setMaxResults(10)
+                .setFirstResult(0)
+                .getResultList();
+    }
+
     // DTO로 조회할 때는 new 오퍼레이션을 사용해서 원하는 컬럼만 조회, 바로 DTO 객체 생성 가능하고 페치조인을 하면 안된다.
     // 연관된 엔티티, 객체 그래프를 가져오는 것이 아니라 연관된 엔티티의 값을 가져오는 것이기 때문에 일반 이너조인으로 해결 가능하다.
     // -> go to order.simplequery

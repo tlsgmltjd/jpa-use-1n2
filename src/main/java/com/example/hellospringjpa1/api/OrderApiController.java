@@ -48,6 +48,13 @@ public class OrderApiController {
                 .collect(toList());
     }
 
+    // V3 페치 조인 최적화
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        return orderRepository.findAllWithItem().stream().map(OrderDto::new)
+                .collect(toList());
+    }
+
     @Getter
     static class OrderDto {
 
