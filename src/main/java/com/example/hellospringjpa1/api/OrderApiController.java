@@ -6,6 +6,8 @@ import com.example.hellospringjpa1.domain.OrderItem;
 import com.example.hellospringjpa1.domain.OrderStatus;
 import com.example.hellospringjpa1.repository.OrderRepository;
 import com.example.hellospringjpa1.repository.OrderSearch;
+import com.example.hellospringjpa1.repository.order.query.OrderQueryDto;
+import com.example.hellospringjpa1.repository.order.query.OrderQueryRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -23,6 +24,7 @@ import static java.util.stream.Collectors.*;
 public class OrderApiController {
 
     private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
 
     // V1 엔티티 직접 노출 : 엔티티를 직접 노출하면 안됨
     @GetMapping("/api/v1/orders")
@@ -58,10 +60,16 @@ public class OrderApiController {
 
     // V3.1 페이징 한계돌파
     @GetMapping("/api/v3.1/orders")
-    public List<OrderDto> ordersV4(@RequestParam(value = "offset", defaultValue = "0") int offset,
+    public List<OrderDto> ordersV3_1(@RequestParam(value = "offset", defaultValue = "0") int offset,
                                    @RequestParam(value = "limit", defaultValue = "100") int limit) {
         return orderRepository.findAllWithMemberDelivery(offset, limit).stream().map(OrderDto::new)
                 .collect(toList());
+    }
+
+    // V4 JPA에서 DTO로 조회
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> ordersV4() {
+        return orderQueryRepository.findOrderQueryDtos();
     }
 
     @Getter
