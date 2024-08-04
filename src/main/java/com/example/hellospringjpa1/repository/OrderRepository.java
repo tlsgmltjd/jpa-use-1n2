@@ -100,6 +100,26 @@ public class OrderRepository {
                 .getResultList();
     }
 
+    // XToOne 관계는 아무리 페치조인 해도 상관없다.
+    // 컬렉션은 지연로딩으로 조회하는것이 좋다.
+
+    // 지연로딩 성능 최적화를 위해 batch fetch size를 적용하여 컬렉션이나 프록시 객체를 설정값만큼 한번에 조회해온다.
+    // default_batch_fetch_size: 100, @BatchSize
+    // 1 + N -> 1 + 1
+    // 컬렉션 페치조인과 배치사이즈 설정은 트레이드 오프가 있다. 데이터가 많다면 데이터 전송량에 대해 최적화가 된다. 중복데이터가 없기 때문이다.
+    // 페치조인은 쿼리 호출수가 1번이여서 네트워크 전송이 빠르긴하다. 하지만 컬렉션 연관관계가 있을때 페이징을 적용한다면 배치사이즈 설정을 고려해야한다.
+
+    // XToOne -> 페치조인, 나머지는 default_batch_fetch_size로 최적화
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                "select o from Order o " +
+                        "join fetch o.member m " +
+                        "join fetch o.delivery d", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
     // DTO로 조회할 때는 new 오퍼레이션을 사용해서 원하는 컬럼만 조회, 바로 DTO 객체 생성 가능하고 페치조인을 하면 안된다.
     // 연관된 엔티티, 객체 그래프를 가져오는 것이 아니라 연관된 엔티티의 값을 가져오는 것이기 때문에 일반 이너조인으로 해결 가능하다.
     // -> go to order.simplequery
