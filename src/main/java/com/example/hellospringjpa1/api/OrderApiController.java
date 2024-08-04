@@ -6,6 +6,8 @@ import com.example.hellospringjpa1.domain.OrderItem;
 import com.example.hellospringjpa1.domain.OrderStatus;
 import com.example.hellospringjpa1.repository.OrderRepository;
 import com.example.hellospringjpa1.repository.OrderSearch;
+import com.example.hellospringjpa1.repository.order.query.OrderFlatDto;
+import com.example.hellospringjpa1.repository.order.query.OrderItemQueryDto;
 import com.example.hellospringjpa1.repository.order.query.OrderQueryDto;
 import com.example.hellospringjpa1.repository.order.query.OrderQueryRepository;
 import lombok.Getter;
@@ -76,6 +78,27 @@ public class OrderApiController {
     @GetMapping("/api/v5/orders")
     public List<OrderQueryDto> ordersV5() {
         return orderQueryRepository.findAllByDto_optimization();
+    }
+
+    // V6 JPA에서 DTO로 조회 - 플랫 데이터 최적화
+    @GetMapping("/api/v6/orders")
+    public List<OrderQueryDto> ordersV6() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllByDto_flat();
+
+        // 쿼리는 한번 나간다.
+        // flat하게. 컬렉션 연관관계의 중복을 허용하면서 데이터를 받은 다음 애플리케이션 단에서 직접 파싱해서 사용하기 때문에 상황에 따라 위보다 느릴 수 있다.
+        // 애플리케이션 추가작업이 많고 페이징이 불가하다 (중복을 허용하며 데이터를 가져왔기 때문)
+
+        return flats.stream()
+                .collect(groupingBy(o -> new OrderQueryDto(o.getOrderId(),
+                                o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        mapping(o -> new OrderItemQueryDto(o.getOrderId(),
+                                o.getItemName(), o.getOrderPrice(), o.getCount()), toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDto(e.getKey().getOrderId(),
+                        e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),
+                        e.getKey().getAddress(), e.getValue()))
+                .collect(toList());
     }
 
     @Getter
