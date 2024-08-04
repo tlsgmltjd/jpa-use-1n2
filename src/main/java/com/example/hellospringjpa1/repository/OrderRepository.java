@@ -1,20 +1,30 @@
 package com.example.hellospringjpa1.repository;
 
-import com.example.hellospringjpa1.domain.Order;
-import com.example.hellospringjpa1.repository.order.simplerquery.SimpleOrderQueryDto;
+import com.example.hellospringjpa1.domain.*;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+import static com.example.hellospringjpa1.domain.QMember.*;
+import static com.example.hellospringjpa1.domain.QOrder.*;
+import static com.example.hellospringjpa1.domain.QOrderItem.*;
+import static com.example.hellospringjpa1.domain.item.QItem.*;
+
 @Repository
 public class OrderRepository {
 
-    @PersistenceContext
-    private EntityManager em;
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    public OrderRepository(EntityManager em) {
+        this.em = em;
+        this.queryFactory = new JPAQueryFactory(em);
+    }
 
     public void save(Order order) {
         em.persist(order);
@@ -60,6 +70,34 @@ public class OrderRepository {
             query = query.setParameter("name", orderSearch.getMemberName());
         }
         return query.getResultList();
+    }
+
+    public List<Order> search(OrderSearch orderSearch) {
+        // QueryDSL은 SQL과 유사하면서 "자바 코드로 동적 쿼리"를 편하게 짤 수 있는 JPQL 빌더.
+        return queryFactory
+                .selectFrom(order)
+                .join(order.member, member).fetchJoin()
+                .join(order.orderItems, orderItem).fetchJoin()
+                .join(orderItem.item, item).fetchJoin()
+                .where(statusEq(orderSearch.getOrderStatus()), naneEq(orderSearch.getMemberName()))
+                .fetch();
+    }
+
+    // BooleanExpression 재사용 가능
+    private BooleanExpression naneEq(String memberName) {
+        if (memberName == null) {
+            return null;
+        }
+
+        return member.name.like("%" + memberName + "%");
+    }
+
+    private BooleanExpression statusEq(OrderStatus orderStatus) {
+        if (orderStatus == null) {
+            return null;
+        }
+
+        return order.status.eq(orderStatus);
     }
 
     public List<Order> findAllWithMemberDelivery() {
