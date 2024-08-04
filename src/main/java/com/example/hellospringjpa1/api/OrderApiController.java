@@ -10,6 +10,8 @@ import com.example.hellospringjpa1.repository.order.query.OrderFlatDto;
 import com.example.hellospringjpa1.repository.order.query.OrderItemQueryDto;
 import com.example.hellospringjpa1.repository.order.query.OrderQueryDto;
 import com.example.hellospringjpa1.repository.order.query.OrderQueryRepository;
+import com.example.hellospringjpa1.service.query.OrderDto;
+import com.example.hellospringjpa1.service.query.OrderQueryService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +29,7 @@ public class OrderApiController {
 
     private final OrderRepository orderRepository;
     private final OrderQueryRepository orderQueryRepository;
+    private final OrderQueryService orderQueryService;
 
     // V1 엔티티 직접 노출 : 엔티티를 직접 노출하면 안됨
     @GetMapping("/api/v1/orders")
@@ -48,16 +51,13 @@ public class OrderApiController {
     // V2 DTO로 조회
     @GetMapping("/api/v2/orders")
     public List<OrderDto> ordersV2() {
-        return orderRepository.findAllByString(new OrderSearch())
-                .stream().map(OrderDto::new)
-                .collect(toList());
+        return orderQueryService.ordersV2();
     }
 
     // V3 페치 조인 최적화
     @GetMapping("/api/v3/orders")
     public List<OrderDto> ordersV3() {
-        return orderRepository.findAllWithItem().stream().map(OrderDto::new)
-                .collect(toList());
+        return orderQueryService.ordersV3();
     }
 
     // V3.1 페이징 한계돌파
@@ -99,45 +99,5 @@ public class OrderApiController {
                         e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),
                         e.getKey().getAddress(), e.getValue()))
                 .collect(toList());
-    }
-
-    @Getter
-    static class OrderDto {
-
-        private Long orderId;
-        private String name;
-        private LocalDateTime orderDate;
-        private OrderStatus orderStatus;
-        private Address address;
-        private List<OrderItemDto> orderItems;
-
-        public OrderDto(Order order) {
-            this.orderId = order.getId();
-            this.name = order.getMember().getName();
-            this.orderDate = order.getOrderDate();
-            this.orderStatus = order.getStatus();
-            this.address = order.getDelivery().getAddress();
-            // lazy 초기화를 안해주면 프록시 객체기 때문에 직렬화를 할 수가 없음(error) 그래도 지금은 하이버네이트 모듈 빈등록해둬서 null값으로 나옴
-            // 하지만 엔티티를 이렇게 노출하는것도 안된다 DTO로 다 바꾸자
-//            order.getOrderItems().forEach(oi -> oi.getItem().getName());
-//            this.orderItems = order.getOrderItems();
-
-            this.orderItems = order.getOrderItems().stream()
-                    .map(OrderItemDto::new).collect(toList());
-        }
-    }
-
-    @Getter
-    static class OrderItemDto {
-
-        private String itemName;
-        private int orderPrice;
-        private int count;
-
-        public OrderItemDto(OrderItem orderItem) {
-            this.itemName = orderItem.getItem().getName();
-            this.orderPrice = orderItem.getOrderPrice();
-            this.count = orderItem.getCount();
-        }
     }
 }
