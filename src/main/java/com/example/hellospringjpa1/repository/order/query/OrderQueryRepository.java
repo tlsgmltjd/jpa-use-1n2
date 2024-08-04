@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
+
+import static java.util.stream.Collectors.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,6 +27,39 @@ public class OrderQueryRepository {
         });
 
         return result;
+    }
+
+    public List<OrderQueryDto> findAllByDto_optimization() {
+        List<OrderQueryDto> result = findOrders();
+
+        // N+1문제가 발생하던것을 루트1, 컬렉션1 = 쿼리 2번으로 최적화
+        // XToOne관계를 먼저 조회 후 반환값의 PK로 컬렉션 관계를 in query로 한번에 조회
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = findOrderItemMap(toOrderIds(result));
+
+        result.forEach(o -> o.setOrderItems(orderItemMap.get(o.getOrderId())));
+
+        return result;
+    }
+
+    private Map<Long, List<OrderItemQueryDto>> findOrderItemMap(List<Long> orderIds) {
+        List<OrderItemQueryDto> orderItems = em.createQuery(
+                        """
+                                    select new com.example.hellospringjpa1.repository.order.query
+                                    .OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count) 
+                                    from OrderItem oi 
+                                    join oi.item i 
+                                    where oi.order.id in :orderIds
+                                """, OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
+                .getResultList();
+
+        Map<Long, List<OrderItemQueryDto>> orderIemMap = orderItems.stream()
+                .collect(groupingBy(orderItemQueryDto -> orderItemQueryDto.getOrderId()));
+        return orderIemMap;
+    }
+
+    private static List<Long> toOrderIds(List<OrderQueryDto> result) {
+        return result.stream().map(OrderQueryDto::getOrderId).collect(toList());
     }
 
     private List<OrderItemQueryDto> findOrderItems(Long orderId) {
@@ -51,5 +87,4 @@ public class OrderQueryRepository {
                                 """, OrderQueryDto.class
         ).getResultList();
     }
-
 }
